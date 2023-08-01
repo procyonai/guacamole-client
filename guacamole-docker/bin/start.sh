@@ -894,6 +894,11 @@ associate_header() {
     ln -s /opt/guacamole/header/guacamole-auth-*.jar "$GUACAMOLE_EXT"
 }
 
+associate_procyon() {
+    # Add required .jar files to GUACAMOLE_EXT
+    ln -s /opt/guacamole/procyon/guacamole-auth-*.jar "$GUACAMOLE_EXT"
+}
+
 ##
 ## Adds properties to guacamole.properties witch configure the CAS
 ## authentication service.
@@ -1158,6 +1163,8 @@ if [ -n "$SAML_IDP_METADATA_URL" ] || [ -n "$SAML_ENTITY_ID" -a -n "$SAML_CALLBA
     INSTALLED_AUTH="$INSTALLED_AUTH saml"
 fi
 
+INSTALLED_AUTH="$INSTALLED_AUTH procyon"
+
 # Use TOTP if specified.
 if [ "$TOTP_ENABLED" = "true" ]; then
     associate_totp
@@ -1172,6 +1179,8 @@ fi
 if [ "$HEADER_ENABLED" = "true" ]; then
     associate_header
 fi
+
+associate_procyon
 
 # Use CAS if specified.
 if [ -n "$CAS_AUTHORIZATION_ENDPOINT" ]; then

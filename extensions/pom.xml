@@ -49,10 +49,14 @@
         <module>guacamole-auth-quickconnect</module>
         <module>guacamole-auth-sso</module>
         <module>guacamole-auth-totp</module>
+        <module>guacamole-auth-procyon</module>
 
         <!-- Additional features -->
         <module>guacamole-history-recording-storage</module>
         <module>guacamole-vault</module>
+        <module>grpc-procyon-gen-common</module>
+        <module>grpc-procyon-gen-rpc</module>
+
 
         <!-- Utility extensions -->
         <module>guacamole-display-statistics</module>
