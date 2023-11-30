@@ -69,6 +69,7 @@ public class ProcyonAuthenticationProviderModule extends AbstractModule {
         // Bind core implementations of guacamole-ext classes
         bind(AuthenticationProvider.class).toInstance(authProvider);
         bind(Environment.class).toInstance(environment);
+        bind(ProcyonResource.class).toInstance(new ProcyonResource());
 
     }
 

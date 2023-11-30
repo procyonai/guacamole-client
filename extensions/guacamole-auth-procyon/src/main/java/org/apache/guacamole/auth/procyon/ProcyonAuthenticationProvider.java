@@ -76,4 +76,9 @@ public class ProcyonAuthenticationProvider extends AbstractAuthenticationProvide
 
     }
 
+    @Override
+    public ProcyonResource getResource() {
+        return injector.getInstance(ProcyonResource.class);
+    }
+
 }
