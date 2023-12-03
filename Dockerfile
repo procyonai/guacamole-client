@@ -86,7 +86,7 @@ COPY --from=builder /opt/guacamole/ .
 
 # Create a new user guacamole
 ARG UID=1000
-ARG GID=1000
+ARG GID=10001
 RUN groupadd --gid $GID guacamole
 RUN useradd --system --create-home --shell /usr/sbin/nologin --uid $UID --gid $GID guacamole
 
