@@ -102,7 +102,7 @@ public class ProcyonResource {
             return Response.serverError().type("text/plain").entity("Error while closing encoded file: " + e.getMessage()).build();
         }
 
-        return Response.ok(encodedFile.);
+        return Response.ok().build();
 
     }
 
