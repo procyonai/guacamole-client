@@ -139,8 +139,6 @@ public class AuthenticationProviderService {
         // Pull HTTP request if present
         HttpServletRequest request = credentials.getRequest();
         if (request != null) {
-            logger.info("CZARAS req: " + request);
-
             // Get the JWT token
             String authHdr = request.getHeader(HttpHeaders.AUTHORIZATION);
             if (authHdr != null) {
