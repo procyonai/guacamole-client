@@ -29,6 +29,7 @@ import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.auth.procyon.user.AuthenticatedUser;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
+import javax.servlet.http.Cookie;
 
 import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
 import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
@@ -138,24 +139,37 @@ public class AuthenticationProviderService {
         // Pull HTTP request if present
         HttpServletRequest request = credentials.getRequest();
         if (request != null) {
+            logger.info("CZARAS req: " + request);
 
             // Get the JWT token
             String authHdr = request.getHeader(HttpHeaders.AUTHORIZATION);
-            if (authHdr == null) {
-//                throw new GuacamoleException("No Authorization header");
-                throw new GuacamoleInvalidCredentialsException("Invalid headers", CredentialsInfo.USERNAME_PASSWORD);
-            }
+            if (authHdr != null) {
+                if (authHdr.length() < 7) {
+                    throw new GuacamoleInvalidCredentialsException("Invalid header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
 
-            if (authHdr.length() < 7) {
-                throw new GuacamoleInvalidCredentialsException("Invalid header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
-
-            }
-            String prefix = authHdr.substring(0, 7);
-            if (prefix.toLowerCase().startsWith("bearer ")) {
-                authHdr = authHdr.substring(7);
-                authHdr = authHdr.substring(0, authHdr.indexOf(' '));
+                }
+                String prefix = authHdr.substring(0, 7);
+                if (prefix.toLowerCase().startsWith("bearer ")) {
+                    authHdr = authHdr.substring(7);
+                    authHdr = authHdr.substring(0, authHdr.indexOf(' '));
+                } else {
+                    throw new GuacamoleInvalidCredentialsException("Invalid auth header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
+                }
             } else {
-                throw new GuacamoleInvalidCredentialsException("Invalid auth header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
+                logger.info("no auth header, try cookies...");
+                Cookie[] cookies = request.getCookies();
+                if (cookies == null) {
+                    throw new GuacamoleInvalidCredentialsException("No cookies", CredentialsInfo.USERNAME_PASSWORD);
+                }
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals("auth_token")) {
+                        authHdr = cookie.getValue();
+                        break;
+                    }
+                }
+                if (authHdr == null) {
+                    throw new GuacamoleInvalidCredentialsException("No Authorization header", CredentialsInfo.USERNAME_PASSWORD);
+                }
             }
 
             // Parse the JWT token
