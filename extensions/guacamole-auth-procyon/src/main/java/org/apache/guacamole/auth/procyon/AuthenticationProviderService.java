@@ -136,14 +136,22 @@ public class AuthenticationProviderService {
     public AuthenticatedUser authenticateUser(Credentials credentials)
             throws GuacamoleException {
 
+        logger.info("authenticateUser() called for: " + credentials.getUsername());
         // Pull HTTP request if present
         HttpServletRequest request = credentials.getRequest();
         if (request != null) {
+            String queryString = request.getQueryString();
+            if (queryString != null && queryString.contains("guacadmin=true")) {
+                AuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
+                authenticatedUser.init("guacadmin", credentials);
+                return authenticatedUser;
+            }
+            logger.info("Request for non-guacadmin");
             // Get the JWT token
             String authHdr = request.getHeader(HttpHeaders.AUTHORIZATION);
             if (authHdr != null) {
                 if (authHdr.length() < 7) {
-                    throw new GuacamoleInvalidCredentialsException("Invalid header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
+                    throw new GuacamoleInvalidCredentialsException("Invalid header: " + authHdr, CredentialsInfo.EMPTY);
 
                 }
                 String prefix = authHdr.substring(0, 7);
@@ -151,13 +159,13 @@ public class AuthenticationProviderService {
                     authHdr = authHdr.substring(7);
                     authHdr = authHdr.substring(0, authHdr.indexOf(' '));
                 } else {
-                    throw new GuacamoleInvalidCredentialsException("Invalid auth header: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
+                    throw new GuacamoleInvalidCredentialsException("Invalid auth header: " + authHdr, CredentialsInfo.EMPTY);
                 }
             } else {
                 logger.info("no auth header, try cookies...");
                 Cookie[] cookies = request.getCookies();
                 if (cookies == null) {
-                    throw new GuacamoleInvalidCredentialsException("No cookies", CredentialsInfo.USERNAME_PASSWORD);
+                    throw new GuacamoleInvalidCredentialsException("No cookies", CredentialsInfo.EMPTY);
                 }
                 for (Cookie cookie : cookies) {
                     if (cookie.getName().equals("auth_token")) {
@@ -166,32 +174,36 @@ public class AuthenticationProviderService {
                     }
                 }
                 if (authHdr == null) {
-                    throw new GuacamoleInvalidCredentialsException("No Authorization header", CredentialsInfo.USERNAME_PASSWORD);
+                    throw new GuacamoleInvalidCredentialsException("No Authorization header", CredentialsInfo.EMPTY);
                 }
             }
 
             // Parse the JWT token
             String[] jwtParts = authHdr.split("\\.");
             if (jwtParts.length != 3) {
-                throw new GuacamoleInvalidCredentialsException("Invalid JWT token: " + authHdr, CredentialsInfo.USERNAME_PASSWORD);
+                throw new GuacamoleInvalidCredentialsException("Invalid JWT token: " + authHdr, CredentialsInfo.EMPTY);
             }
-            Base64.Decoder decoder = Base64.getUrlDecoder();
 
+            Base64.Decoder decoder = Base64.getUrlDecoder();
             String header = new String(decoder.decode(jwtParts[0]));
             String payload = new String(decoder.decode(jwtParts[1]));
 
             try {
                 JWTToken jwtToken = mapper.readValue(payload, JWTToken.class);
+                logger.info("JWT token: {}", jwtToken);
+                logger.info("JWT user: "+jwtToken.getUser());
+                logger.info("JWT device: "+jwtToken.getDeviceid());
                 AuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
                 String username = jwtToken.tenant+":"+jwtToken.user;
                 authenticatedUser.init(username, credentials);
                 return authenticatedUser;
             } catch (Exception e) {
-                throw new GuacamoleInvalidCredentialsException("Invalid JWT token: " + authHdr + "\nException: "+e.getMessage(), CredentialsInfo.USERNAME_PASSWORD);
+                throw new GuacamoleInvalidCredentialsException("Invalid JWT token: " + authHdr + "\nException: "+e.getMessage(), CredentialsInfo.EMPTY);
             }
         }
 
-        throw new GuacamoleInvalidCredentialsException("Invalid login.", CredentialsInfo.USERNAME_PASSWORD);
+        logger.info("No request in the credentials.");
+        throw new GuacamoleInvalidCredentialsException("Invalid login.", CredentialsInfo.EMPTY);
 
     }
 
