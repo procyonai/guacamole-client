@@ -121,6 +121,8 @@
 
         <!-- Extension JavaScript -->
         <script type="text/javascript" src="app.js?b=${guacamole.build.identifier}"></script>
-
+        <script>
+            window.onload(localStorage.removeItem("GUAC_AUTH_TOKEN"))
+        </script>
     </body>
 </html>
