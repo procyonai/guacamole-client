@@ -22,6 +22,8 @@ package org.apache.guacamole.auth.file;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -29,6 +31,8 @@ import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.environment.LocalEnvironment;
 import org.apache.guacamole.net.auth.Credentials;
+import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
+import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
 import org.apache.guacamole.net.auth.simple.SimpleAuthenticationProvider;
 import org.apache.guacamole.xml.DocumentHandler;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
@@ -68,7 +72,7 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
     /**
      * The filename to use for the user mapping.
      */
-    public static final String USER_MAPPING_FILENAME = "user-mapping.xml";
+    public static final String USER_MAPPING_FILENAME = "/var/lib/procyon/user-mapping.xml";
     
     @Override
     public String getIdentifier() {
@@ -87,7 +91,7 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
     private UserMapping getUserMapping() {
 
         // Read user mapping from GUACAMOLE_HOME/user-mapping.xml
-        File userMappingFile = new File(environment.getGuacamoleHome(), USER_MAPPING_FILENAME);
+        File userMappingFile = new File(USER_MAPPING_FILENAME);
 
         // Abort if user mapping does not exist
         if (!userMappingFile.exists()) {
@@ -162,16 +166,35 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
             getAuthorizedConfigurations(Credentials credentials)
             throws GuacamoleException {
 
+        // Pull HTTP request if present
+        String user="";
+        HttpServletRequest request = credentials.getRequest();
+        if (request != null) {
+            user = request.getHeader("x-auth-user");
+            Cookie[] cookies = request.getCookies();
+            if (cookies == null) {
+                return  null;
+            }
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("x-auth-user")) {
+                    user = cookie.getValue();
+                    break;
+                }
+            }
+            if (user == null || user.equals("") || user.equals("guacadmin")) {
+                return null;
+            }
+        }
+        logger.info("Inside getAuthorizedConfigurations {}",user);
         // Abort authorization if no user mapping exists
         UserMapping userMapping = getUserMapping();
         if (userMapping == null)
             return null;
 
         // Validate and return info for given user and pass
-        Authorization auth = userMapping.getAuthorization(credentials.getUsername());
-        if (auth != null && auth.validate(credentials.getUsername(), credentials.getPassword()))
+        Authorization auth = userMapping.getAuthorization(user);
+        if (auth != null)
             return auth.getConfigurations();
-
         // Unauthorized
         return null;
 
