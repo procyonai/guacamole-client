@@ -19,14 +19,11 @@
 
 package org.apache.guacamole.tunnel;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.apache.guacamole.GuacamoleException;
-import org.apache.guacamole.GuacamoleResourceNotFoundException;
-import org.apache.guacamole.GuacamoleSession;
-import org.apache.guacamole.GuacamoleUnauthorizedException;
+
+import org.apache.guacamole.*;
 import org.apache.guacamole.net.GuacamoleTunnel;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Connectable;
@@ -37,6 +34,7 @@ import org.apache.guacamole.net.event.TunnelConnectEvent;
 import org.apache.guacamole.rest.auth.AuthenticationService;
 import org.apache.guacamole.protocol.GuacamoleClientInformation;
 import org.apache.guacamole.rest.event.ListenerService;
+import org.apache.guacamole.history.HistoryAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -335,6 +333,8 @@ public class TunnelRequestService {
         String id                       = request.getIdentifier();
         TunnelRequestType type          = request.getType();
         String authProviderIdentifier   = request.getAuthenticationProviderIdentifier();
+        String procyonUser              = request.getProcyonUser();
+        String procyonConn              = request.getProcyonConnection();
         GuacamoleClientInformation info = getClientInformation(request);
 
         GuacamoleSession session = authenticationService.getGuacamoleSession(authToken);
@@ -347,10 +347,17 @@ public class TunnelRequestService {
             info.setName(name);
 
         try {
+            StandardTokenMap tokenMap = new StandardTokenMap(authenticatedUser);
+
+            tokenMap.put("PROCYON_USERNAME", procyonUser);
+            tokenMap.put("PROCYON_CONNECTION", procyonConn);
+            tokenMap.put("HISTORY_PATH", HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath());
 
             // Create connected tunnel using provided connection ID and client information
             GuacamoleTunnel tunnel = createConnectedTunnel(userContext, type,
-                    id, info, new StandardTokenMap(authenticatedUser));
+                    id, info, tokenMap);
+            tunnel.setProcyonUsername(procyonUser);
+            tunnel.setProcyonConnection(procyonConn);
 
             // Notify listeners to allow connection to be vetoed
             fireTunnelConnectEvent(authenticatedUser, authenticatedUser.getCredentials(), tunnel);

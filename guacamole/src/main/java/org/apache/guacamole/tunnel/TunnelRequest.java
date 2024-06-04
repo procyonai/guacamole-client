@@ -100,6 +100,12 @@ public abstract class TunnelRequest {
     public static final String TIMEZONE_PARAMETER = "GUAC_TIMEZONE";
 
     /**
+     * The name of the user requesting a tunnel.
+     */
+    public static final String AUTH_PROCYON_USERNAME_HEADER = "x-auth-procyon";
+    public static final String AUTH_PROCYON_CONNECTION_HEADER = "x-auth-conn";
+
+    /**
      * Returns the value of the parameter having the given name.
      *
      * @param name
@@ -144,6 +150,50 @@ public abstract class TunnelRequest {
             throw new GuacamoleClientException("Parameter \"" + name + "\" is required.");
 
         return value;
+
+    }
+
+    /**
+     * Returns the value of the header having the given name.
+     *
+     * @param name
+     *     The name of the parameter to return.
+     *
+     * @return
+     *     The value of the header having the given name, or null if no such
+     *     parameter was specified.
+     */
+    public abstract String getHeader(String name);
+
+    /**
+     * Returns a list of all values specified for the given header.
+     *
+     * @param name
+     *     The name of the parameter to return.
+     *
+     * @return
+     *     All values of the headers having the given name , or null if no
+     *     such header was specified.
+     */
+    public abstract List<String> getHeaderValues(String name);
+
+    /**
+     * Returns the value of the header having the given name, throwing an
+     * exception if the header is missing.
+     *
+     * @return
+     *     The value of the header having the given name.
+     *
+     * @throws GuacamoleException
+     *     If the header is not present in the request.
+     */
+    public String[] getCookies() throws GuacamoleException {
+
+        List<String> cookies = getHeaderValues("cookie");
+        if (cookies.isEmpty()) {
+            throw new GuacamoleClientException("No cookies found in the request.");
+        }
+        return cookies.get(0).split("; ");
 
     }
 
@@ -245,6 +295,28 @@ public abstract class TunnelRequest {
      */
     public String getIdentifier() throws GuacamoleException {
         return getRequiredParameter(IDENTIFIER_PARAMETER);
+    }
+
+    public String getProcyonUser() throws GuacamoleException {
+        String[] cookies = getCookies();
+        for (String cookie: cookies) {
+            if (cookie.startsWith(AUTH_PROCYON_USERNAME_HEADER+"=")) {
+                return cookie.split("=")[1];
+            }
+        }
+
+        throw new GuacamoleClientException("No procyon user found in the request.");
+    }
+
+    public String getProcyonConnection() throws GuacamoleException {
+        String[] cookies = getCookies();
+        for (String cookie: cookies) {
+            if (cookie.startsWith(AUTH_PROCYON_CONNECTION_HEADER+"=")) {
+                return cookie.split("=")[1];
+            }
+        }
+
+        throw new GuacamoleClientException("No procyon connection found in the request.");
     }
 
     /**

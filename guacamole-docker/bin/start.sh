@@ -894,11 +894,6 @@ associate_header() {
     ln -s /opt/guacamole/header/guacamole-auth-*.jar "$GUACAMOLE_EXT"
 }
 
-associate_procyon() {
-    # Add required .jar files to GUACAMOLE_EXT
-    ln -s /opt/guacamole/procyon/guacamole-auth-*.jar "$GUACAMOLE_EXT"
-}
-
 ##
 ## Adds properties to guacamole.properties witch configure the CAS
 ## authentication service.
@@ -1173,8 +1168,6 @@ if [ -n "$DUO_API_HOSTNAME" ]; then
     associate_duo
 fi
 
-associate_procyon
-
 # Use header if specified.
 if [ "$HEADER_ENABLED" = "true" ]; then
     associate_header
@@ -1199,20 +1192,20 @@ fi
 #
 # Validate that at least one authentication backend is installed
 #
-
-if [ -z "$INSTALLED_AUTH" -a -z "$GUACAMOLE_HOME_TEMPLATE" ]; then
-    cat <<END
-FATAL: No authentication configured
--------------------------------------------------------------------------------
-The Guacamole Docker container needs at least one authentication mechanism in
-order to function, such as a MySQL database, PostgreSQL database, SQLServer
-database, LDAP directory or RADIUS server. Please specify at least the
-MYSQL_DATABASE or POSTGRESQL_DATABASE or SQLSERVER_DATABASE environment variables,
-or check Guacamole's Docker documentation regarding configuring LDAP and/or
-custom extensions.
-END
-    exit 1;
-fi
+#
+#if [ -z "$INSTALLED_AUTH" -a -z "$GUACAMOLE_HOME_TEMPLATE" ]; then
+#    cat <<END
+#FATAL: No authentication configured
+#-------------------------------------------------------------------------------
+#The Guacamole Docker container needs at least one authentication mechanism in
+#order to function, such as a MySQL database, PostgreSQL database, SQLServer
+#database, LDAP directory or RADIUS server. Please specify at least the
+#MYSQL_DATABASE or POSTGRESQL_DATABASE or SQLSERVER_DATABASE environment variables,
+#or check Guacamole's Docker documentation regarding configuring LDAP and/or
+#custom extensions.
+#END
+#    exit 1;
+#fi
 
 # Set extension priority if specified
 set_optional_property "extension-priority" "$EXTENSION_PRIORITY"

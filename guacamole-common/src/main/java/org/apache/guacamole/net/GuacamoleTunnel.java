@@ -40,6 +40,12 @@ public interface GuacamoleTunnel {
      * transmit the tunnel UUID.
      */
     static final String INTERNAL_DATA_OPCODE = "";
+    public String getProcyonUsername();
+    public String getProcyonConnection();
+
+    public void setProcyonUsername(String username);
+    public void setProcyonConnection(String connection);
+
 
     /**
      * Acquires exclusive read access to the Guacamole instruction stream

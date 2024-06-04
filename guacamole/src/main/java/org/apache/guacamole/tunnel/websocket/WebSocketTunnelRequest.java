@@ -23,17 +23,21 @@ import java.util.List;
 import java.util.Map;
 import javax.websocket.server.HandshakeRequest;
 import org.apache.guacamole.tunnel.TunnelRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * WebSocket-specific implementation of TunnelRequest.
  */
 public class WebSocketTunnelRequest extends TunnelRequest {
 
+    private final Logger logger = LoggerFactory.getLogger(WebSocketTunnelRequest.class);
     /**
      * All parameters passed via HTTP to the WebSocket handshake.
      */
     private final Map<String, List<String>> handshakeParameters;
-    
+    private final Map<String, List<String>> handshakeHeaders;
+
     /**
      * Creates a TunnelRequest implementation which delegates parameter and
      * session retrieval to the given HandshakeRequest.
@@ -42,6 +46,7 @@ public class WebSocketTunnelRequest extends TunnelRequest {
      */
     public WebSocketTunnelRequest(HandshakeRequest request) {
         this.handshakeParameters = request.getParameterMap();
+        this.handshakeHeaders = request.getHeaders();
     }
 
     @Override
@@ -60,6 +65,26 @@ public class WebSocketTunnelRequest extends TunnelRequest {
     @Override
     public List<String> getParameterValues(String name) {
         return handshakeParameters.get(name);
+    }
+
+    @Override
+    public String getHeader(String name) {
+
+        // Pull list of values, if present
+        List<String> values = getHeaderValues(name);
+        if (values == null || values.isEmpty()) {
+            logger.error("Available headers: " + handshakeHeaders);
+            return null;
+        }
+
+        // Return first parameter value arbitrarily
+        return values.get(0);
+
+    }
+
+    @Override
+    public List<String> getHeaderValues(String name) {
+        return handshakeHeaders.get(name);
     }
     
 }
