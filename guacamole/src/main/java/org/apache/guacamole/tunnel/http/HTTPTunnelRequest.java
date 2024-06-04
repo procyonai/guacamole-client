@@ -19,24 +19,26 @@
 
 package org.apache.guacamole.tunnel.http;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.guacamole.tunnel.TunnelRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HTTP-specific implementation of TunnelRequest.
  */
 public class HTTPTunnelRequest extends TunnelRequest {
 
+    private final Logger logger = LoggerFactory.getLogger(HTTPTunnelRequest.class);
+
     /**
      * A copy of the parameters obtained from the HttpServletRequest used to
      * construct the HTTPTunnelRequest.
      */
     private final Map<String, List<String>> parameterMap =
+            new HashMap<String, List<String>>();
+    private final Map<String, List<String>> headerMap =
             new HashMap<String, List<String>>();
 
     /**
@@ -65,6 +67,18 @@ public class HTTPTunnelRequest extends TunnelRequest {
 
         }
 
+        for (String headerName : ((List<String>) Collections.list(request.getHeaderNames()))) {
+            // Get header values
+            List<String> headerValues = Collections.list(request.getHeaders(headerName));
+
+            // Store copy of all values in our own map
+            headerMap.put(
+                    headerName,
+                    headerValues
+            );
+
+        }
+
     }
 
     @Override
@@ -81,6 +95,26 @@ public class HTTPTunnelRequest extends TunnelRequest {
     @Override
     public List<String> getParameterValues(String name) {
         return parameterMap.get(name);
+    }
+
+    @Override
+    public String getHeader(String name) {
+
+        // Pull list of values, if present
+        List<String> values = getHeaderValues(name);
+        if (values == null || values.isEmpty()) {
+            logger.error("Available headers: " + headerMap);
+            return null;
+        }
+
+        // Return first parameter value arbitrarily
+        return values.get(0);
+
+    }
+
+    @Override
+    public List<String> getHeaderValues(String name) {
+        return headerMap.get(name);
     }
     
 }

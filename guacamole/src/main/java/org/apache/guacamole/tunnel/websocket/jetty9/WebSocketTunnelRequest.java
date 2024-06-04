@@ -24,17 +24,21 @@ import java.util.List;
 import java.util.Map;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.apache.guacamole.tunnel.TunnelRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Jetty 9 WebSocket-specific implementation of TunnelRequest.
  */
 public class WebSocketTunnelRequest extends TunnelRequest {
+    private final Logger logger = LoggerFactory.getLogger(WebSocketTunnelRequest.class);
 
     /**
      * All parameters passed via HTTP to the WebSocket handshake.
      */
     private final Map<String, String[]> handshakeParameters;
-    
+    private final Map<String, List<String>> handshakeHeaders;
+
     /**
      * Creates a TunnelRequest implementation which delegates parameter and
      * session retrieval to the given UpgradeRequest.
@@ -42,7 +46,9 @@ public class WebSocketTunnelRequest extends TunnelRequest {
      * @param request The UpgradeRequest to wrap.
      */
     public WebSocketTunnelRequest(UpgradeRequest request) {
+
         this.handshakeParameters = request.getParameterMap();
+        this.handshakeHeaders = request.getHeaders();
     }
 
     @Override
@@ -67,5 +73,25 @@ public class WebSocketTunnelRequest extends TunnelRequest {
 
         return Arrays.asList(values);
     }
-    
+
+    @Override
+    public String getHeader(String name) {
+
+        // Pull list of values, if present
+        List<String> values = getHeaderValues(name);
+        if (values == null || values.isEmpty()) {
+            logger.error("Available headers: " + handshakeHeaders);
+            return null;
+        }
+
+        // Return first parameter value arbitrarily
+        return values.get(0);
+
+    }
+
+    @Override
+    public List<String> getHeaderValues(String name) {
+        return handshakeHeaders.get(name);
+    }
+
 }

@@ -73,6 +73,11 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
      * The filename to use for the user mapping.
      */
     public static final String USER_MAPPING_FILENAME = "/var/lib/procyon/user-mapping.xml";
+
+    /**
+     * The header to use for the user (procyon connection) mapping.
+     */
+    public static final String AUTH_PROCYON_CONNECTION_HEADER = "x-auth-conn";
     
     @Override
     public String getIdentifier() {
@@ -167,16 +172,16 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
             throws GuacamoleException {
 
         // Pull HTTP request if present
-        String user="";
+        String user = "";
         HttpServletRequest request = credentials.getRequest();
         if (request != null) {
-            user = request.getHeader("x-auth-user");
+            user = request.getHeader(AUTH_PROCYON_CONNECTION_HEADER);
             Cookie[] cookies = request.getCookies();
             if (cookies == null) {
                 return  null;
             }
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("x-auth-user")) {
+                if (cookie.getName().equals(AUTH_PROCYON_CONNECTION_HEADER)) {
                     user = cookie.getValue();
                     break;
                 }
