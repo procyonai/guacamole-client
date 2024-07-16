@@ -20,7 +20,11 @@
 package org.apache.guacamole.protocol;
 
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +55,7 @@ public class GuacamoleConfiguration implements Serializable {
     /**
      * Map of all associated parameter values, indexed by parameter name.
      */
-    private final Map<String, String> parameters = new HashMap<String, String>();
+    private final Map<String, String> parameters = new HashMap<>();
 
     /**
      * Creates a new, blank GuacamoleConfiguration with its protocol, connection
@@ -59,6 +63,55 @@ public class GuacamoleConfiguration implements Serializable {
      */
     public GuacamoleConfiguration() {
     }
+
+    private static final int GCM_NONCE_LENGTH = 12;
+    private static final int GCM_TAG_LENGTH = 16;
+    private static final String GCM_HEX_KEY = "6d4c6f66507872314f373666546351414a71763958375557646841546d753976";
+
+    public static String decrypt(String encryptedString) {
+        if (encryptedString == null || encryptedString.isEmpty()) {
+            return "";
+        }
+        try {
+
+            byte[] key = hexStringToByteArray(GCM_HEX_KEY);
+            byte[] enc = hexStringToByteArray(encryptedString);
+
+            if (enc.length < GCM_NONCE_LENGTH) {
+                throw new IllegalArgumentException("Invalid input string");
+            }
+
+            byte[] nonce = new byte[GCM_NONCE_LENGTH];
+            byte[] ciphertext = new byte[enc.length - GCM_NONCE_LENGTH];
+
+            System.arraycopy(enc, 0, nonce, 0, GCM_NONCE_LENGTH);
+            System.arraycopy(enc, GCM_NONCE_LENGTH, ciphertext, 0, ciphertext.length);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, nonce);
+
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+
+            byte[] plaintext = cipher.doFinal(ciphertext);
+
+            return new String(plaintext, StandardCharsets.UTF_8);
+        }catch (Exception e){
+            return encryptedString;
+        }
+    }
+
+    private static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+
 
     /**
      * Copies the given GuacamoleConfiguration, creating a new, indepedent
@@ -74,8 +127,14 @@ public class GuacamoleConfiguration implements Serializable {
         connectionID = config.getConnectionID();
 
         // Copy parameter values
-        for (String name : config.getParameterNames())
-            parameters.put(name, config.getParameter(name));
+        for (String name : config.getParameterNames()) {
+            if (name.equals("password")) {
+                parameters.put(name, decrypt(config.getParameter(name)));
+            }else{
+                parameters.put(name, config.getParameter(name));
+            }
+
+        }
 
     }
 
