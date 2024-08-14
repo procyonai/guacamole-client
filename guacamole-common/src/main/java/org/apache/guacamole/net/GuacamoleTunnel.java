@@ -42,10 +42,11 @@ public interface GuacamoleTunnel {
     static final String INTERNAL_DATA_OPCODE = "";
     public String getProcyonUsername();
     public String getProcyonConnection();
+    public String getProcyonDevice();
 
     public void setProcyonUsername(String username);
     public void setProcyonConnection(String connection);
-
+    public void setProcyonDevice(String device);
 
     /**
      * Acquires exclusive read access to the Guacamole instruction stream

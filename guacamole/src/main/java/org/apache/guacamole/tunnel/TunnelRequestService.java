@@ -335,6 +335,7 @@ public class TunnelRequestService {
         String authProviderIdentifier   = request.getAuthenticationProviderIdentifier();
         String procyonUser              = request.getProcyonUser();
         String procyonConn              = request.getProcyonConnection();
+        String procyonDevice            = request.getProcyonDevice();
         GuacamoleClientInformation info = getClientInformation(request);
 
         GuacamoleSession session = authenticationService.getGuacamoleSession(authToken);
@@ -351,6 +352,7 @@ public class TunnelRequestService {
 
             tokenMap.put("PROCYON_USERNAME", procyonUser);
             tokenMap.put("PROCYON_CONNECTION", procyonConn);
+            tokenMap.put("PROCYON_DEVICE", procyonDevice);
             tokenMap.put("HISTORY_PATH", HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath());
 
             // Create connected tunnel using provided connection ID and client information

@@ -44,6 +44,7 @@ public abstract class AbstractGuacamoleTunnel implements GuacamoleTunnel {
 
     private String procyonUsername = "";
     private String procyonConnection = "";
+    private String procyonDevice = "";
 
     public String getProcyonUsername() {
         return procyonUsername;
@@ -53,6 +54,10 @@ public abstract class AbstractGuacamoleTunnel implements GuacamoleTunnel {
         return procyonConnection;
     }
 
+    public String getProcyonDevice() {
+        return procyonDevice;
+    }
+
     public void setProcyonUsername(String username) {
         procyonUsername = username;
     }
@@ -60,6 +65,12 @@ public abstract class AbstractGuacamoleTunnel implements GuacamoleTunnel {
     public void setProcyonConnection(String connection) {
         procyonConnection = connection;
     }
+
+    public void setProcyonDevice(String device) {
+        procyonDevice = device;
+    }
+
+
 
     /**
      * Creates a new GuacamoleTunnel which synchronizes access to the

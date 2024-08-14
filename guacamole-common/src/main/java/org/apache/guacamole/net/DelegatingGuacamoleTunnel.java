@@ -36,6 +36,7 @@ public class DelegatingGuacamoleTunnel implements GuacamoleTunnel {
     private final GuacamoleTunnel tunnel;
     private String procyonUsername = "";
     private String procyonConnection = "";
+    private String procyonDevice = "";
 
     /**
      * Wraps the given tunnel such that all function calls against this tunnel
@@ -56,12 +57,20 @@ public class DelegatingGuacamoleTunnel implements GuacamoleTunnel {
         return procyonConnection;
     }
 
+    public String getProcyonDevice() {
+        return procyonDevice;
+    }
+
     public void setProcyonUsername(String username) {
         procyonUsername = username;
     }
 
     public void setProcyonConnection(String connection) {
         procyonConnection = connection;
+    }
+
+    public void setProcyonDevice(String device) {
+        procyonDevice = device;
     }
 
     @Override

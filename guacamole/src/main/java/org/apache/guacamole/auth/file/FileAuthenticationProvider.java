@@ -78,6 +78,12 @@ public class FileAuthenticationProvider extends SimpleAuthenticationProvider {
      * The header to use for the user (procyon connection) mapping.
      */
     public static final String AUTH_PROCYON_CONNECTION_HEADER = "x-auth-conn";
+
+    /**
+     * The header to use for the devide (procyon connection) mapping.
+     */
+    public static final String AUTH_PROCYON_DEVICE_HEADER = "x-auth-device";
+
     
     @Override
     public String getIdentifier() {
