@@ -319,6 +319,18 @@ public abstract class TunnelRequest {
         throw new GuacamoleClientException("No procyon connection found in the request.");
     }
 
+    public String getProcyonDevice() throws GuacamoleException {
+        String[] cookies = getCookies();
+        for (String cookie: cookies) {
+            if (cookie.startsWith(FileAuthenticationProvider.AUTH_PROCYON_DEVICE_HEADER+"=")) {
+                return cookie.split("=")[1];
+            }
+        }
+
+        throw new GuacamoleClientException("No procyon connection found in the request.");
+    }
+
+
     /**
      * Returns the display width desired for the Guacamole session over the
      * tunnel being requested.
