@@ -19,6 +19,8 @@
 
 package org.apache.guacamole.tunnel;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -282,6 +284,23 @@ public class TunnelRequestService {
                         session.getAuthenticatedUser().getIdentifier(),
                         type.NAME, id, duration);
 
+                // Specify the file path
+                File file = new File(tunnel.getRecordingPath()+".lock");
+
+                try {
+                    // Attempt to create the file
+                    if (file.exists()) {
+                        logger.info("lock file exists: " +tunnel.getRecordingPath());
+                        boolean ok = file.delete();
+                        logger.info("lock file delete return: " +ok);
+                    } else {
+                        logger.error("lock file missing!: " +tunnel.getRecordingPath());
+                    }
+                } catch (SecurityException e) {
+                    // Handle potential I/O errors
+                    e.printStackTrace();
+                }
+
                 try {
 
                     // Close and clean up tunnel
@@ -336,6 +355,8 @@ public class TunnelRequestService {
         String procyonUser              = request.getProcyonUser();
         String procyonConn              = request.getProcyonConnection();
         String procyonDevice            = request.getProcyonDevice();
+        String procyonSessionID         = request.getProcyonSessionID();
+        String procyonInstanceID        = request.getProcyonInstanceID();
         GuacamoleClientInformation info = getClientInformation(request);
 
         GuacamoleSession session = authenticationService.getGuacamoleSession(authToken);
@@ -350,22 +371,69 @@ public class TunnelRequestService {
         try {
             StandardTokenMap tokenMap = new StandardTokenMap(authenticatedUser);
 
+
             tokenMap.put("PROCYON_USERNAME", procyonUser);
+            logger.debug("PROCYON_USERNAME="+procyonUser);
             tokenMap.put("PROCYON_CONNECTION", procyonConn);
+            logger.debug("PROCYON_CONNECTION="+procyonConn);
             tokenMap.put("PROCYON_DEVICE", procyonDevice);
-            tokenMap.put("HISTORY_PATH", HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath());
+            logger.debug("PROCYON_DEVICE="+procyonDevice);
+            tokenMap.put("PROCYON_SESSION_ID", procyonSessionID);
+            logger.debug("PROCYON_SESSION_ID="+procyonSessionID);
+            tokenMap.put("PROCYON_INSTANCE_ID", procyonInstanceID);
+            logger.debug("PROCYON_INSTANCE_ID="+procyonInstanceID);
+            String historyPath = HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath();
+            tokenMap.put("HISTORY_PATH", historyPath);
+            logger.debug("HISTORY_PATH="+historyPath);
 
             // Create connected tunnel using provided connection ID and client information
             GuacamoleTunnel tunnel = createConnectedTunnel(userContext, type,
                     id, info, tokenMap);
-            tunnel.setProcyonUsername(procyonUser);
-            tunnel.setProcyonConnection(procyonConn);
+            historyPath = "/var/lib/procyon/recordings";
+            File historyDir = new File(historyPath);
+            if (historyDir.exists()) {
+                logger.debug("History dir exists: " +historyPath);
+                String[] files = historyDir.list();
+                if (files != null) {
+                    logger.debug("History dir list: "+ Arrays.stream(files).reduce("", (a, b) -> a + ", " + b));
+                }
+            }
+
+            String recordingDir = String.format("%s/%s/%s/%s/%s", historyPath, procyonUser, procyonInstanceID,
+                    procyonConn, procyonSessionID);
+            logger.info("Recording dir = "+recordingDir);
+            String recordingPath = String.format("%s/%s_%s_%s", recordingDir, procyonDevice,
+                    tokenMap.get(StandardTokenMap.DATE_TOKEN), tokenMap.get(StandardTokenMap.TIME_TOKEN));
+            logger.info("Recording file = "+recordingPath);
+            tunnel.setRecordingPath(recordingPath);
 
             // Notify listeners to allow connection to be vetoed
             fireTunnelConnectEvent(authenticatedUser, authenticatedUser.getCredentials(), tunnel);
 
             // Associate tunnel with session
-            return createAssociatedTunnel(tunnel, authToken, session, userContext, type, id);
+            GuacamoleTunnel retTun = createAssociatedTunnel(tunnel, authToken, session, userContext, type, id);
+
+            // Specify the file path
+            File recDir = new File(recordingDir);
+            boolean success = recDir.mkdirs();
+            File file = new File(recordingPath+".lock");
+            if (!success) {
+                logger.error("Failed to create recording path = "+recordingDir);
+            }
+
+            try {
+                // Attempt to create the file
+                if (file.createNewFile()) {
+                    System.out.println("Empty file created successfully.");
+                } else {
+                    System.out.println("File already exists.");
+                }
+            } catch (IOException e) {
+                // Handle potential I/O errors
+                e.printStackTrace();
+            }
+
+            return retTun;
 
         }
 
