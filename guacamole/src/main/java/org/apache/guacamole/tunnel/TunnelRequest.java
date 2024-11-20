@@ -23,16 +23,12 @@ import java.util.List;
 import org.apache.guacamole.GuacamoleClientException;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.file.FileAuthenticationProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A request object which provides only the functions absolutely required to
  * retrieve and connect to a tunnel.
  */
 public abstract class TunnelRequest {
-
-    private final Logger logger = LoggerFactory.getLogger(TunnelRequest.class);
 
     /**
      * The name of the request parameter containing the user's authentication
@@ -108,16 +104,6 @@ public abstract class TunnelRequest {
      * The name of the user requesting a tunnel.
      */
     public static final String AUTH_PROCYON_USERNAME_HEADER = "x-auth-procyon";
-
-    /**
-     * The name of the user requesting a tunnel.
-     */
-    public static final String AUTH_PROCYON_INSTANCE_ID = "x-rdp-instance-id-procyon";
-
-    /**
-     * The name of the user requesting a tunnel.
-     */
-    public static final String AUTH_PROCYON_SESSION_ID =  "x-session-id-procyon";
 
     /**
      * Returns the value of the parameter having the given name.
@@ -344,27 +330,6 @@ public abstract class TunnelRequest {
         throw new GuacamoleClientException("No procyon connection found in the request.");
     }
 
-    public String getProcyonSessionID() throws GuacamoleException {
-        String[] cookies = getCookies();
-        for (String cookie: cookies) {
-            if (cookie.startsWith(AUTH_PROCYON_SESSION_ID+"=")) {
-                return cookie.split("=")[1];
-            }
-        }
-
-        throw new GuacamoleClientException("No procyon session ID found in the request.");
-    }
-
-    public String getProcyonInstanceID() throws GuacamoleException {
-        String[] cookies = getCookies();
-        for (String cookie: cookies) {
-            if (cookie.startsWith(AUTH_PROCYON_INSTANCE_ID+"=")) {
-                return cookie.split("=")[1];
-            }
-        }
-
-        throw new GuacamoleClientException("No procyon instance ID found in the request.");
-    }
 
     /**
      * Returns the display width desired for the Guacamole session over the

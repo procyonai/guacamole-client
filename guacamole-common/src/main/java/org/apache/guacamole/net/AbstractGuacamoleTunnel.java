@@ -42,15 +42,35 @@ public abstract class AbstractGuacamoleTunnel implements GuacamoleTunnel {
      */
     private final ReentrantLock writerLock;
 
-    private String procyonRecording = "";
+    private String procyonUsername = "";
+    private String procyonConnection = "";
+    private String procyonDevice = "";
 
-    public String getRecordingPath() {
-        return procyonRecording;
+    public String getProcyonUsername() {
+        return procyonUsername;
     }
 
-    public void setRecordingPath(String username) {
-        procyonRecording = username;
+    public String getProcyonConnection() {
+        return procyonConnection;
     }
+
+    public String getProcyonDevice() {
+        return procyonDevice;
+    }
+
+    public void setProcyonUsername(String username) {
+        procyonUsername = username;
+    }
+
+    public void setProcyonConnection(String connection) {
+        procyonConnection = connection;
+    }
+
+    public void setProcyonDevice(String device) {
+        procyonDevice = device;
+    }
+
+
 
     /**
      * Creates a new GuacamoleTunnel which synchronizes access to the

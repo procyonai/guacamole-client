@@ -31,10 +31,6 @@ import org.apache.guacamole.io.GuacamoleWriter;
  */
 public interface GuacamoleTunnel {
 
-    String getRecordingPath();
-
-    void setRecordingPath(String username);
-
     /**
      * The Guacamole protocol instruction opcode reserved for arbitrary
      * internal use by tunnel implementations. The value of this opcode is
@@ -44,6 +40,13 @@ public interface GuacamoleTunnel {
      * transmit the tunnel UUID.
      */
     static final String INTERNAL_DATA_OPCODE = "";
+    public String getProcyonUsername();
+    public String getProcyonConnection();
+    public String getProcyonDevice();
+
+    public void setProcyonUsername(String username);
+    public void setProcyonConnection(String connection);
+    public void setProcyonDevice(String device);
 
     /**
      * Acquires exclusive read access to the Guacamole instruction stream

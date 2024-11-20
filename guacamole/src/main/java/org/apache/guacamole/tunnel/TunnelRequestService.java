@@ -19,8 +19,6 @@
 
 package org.apache.guacamole.tunnel;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -284,23 +282,6 @@ public class TunnelRequestService {
                         session.getAuthenticatedUser().getIdentifier(),
                         type.NAME, id, duration);
 
-                // Specify the file path
-                File file = new File(tunnel.getRecordingPath()+".lock");
-
-                try {
-                    // Attempt to create the file
-                    if (file.exists()) {
-                        logger.info("lock file exists: " +tunnel.getRecordingPath());
-                        boolean ok = file.delete();
-                        logger.info("lock file delete return: " +ok);
-                    } else {
-                        logger.error("lock file missing!: " +tunnel.getRecordingPath());
-                    }
-                } catch (SecurityException e) {
-                    // Handle potential I/O errors
-                    e.printStackTrace();
-                }
-
                 try {
 
                     // Close and clean up tunnel
@@ -355,8 +336,6 @@ public class TunnelRequestService {
         String procyonUser              = request.getProcyonUser();
         String procyonConn              = request.getProcyonConnection();
         String procyonDevice            = request.getProcyonDevice();
-        String procyonSessionID         = request.getProcyonSessionID();
-        String procyonInstanceID        = request.getProcyonInstanceID();
         GuacamoleClientInformation info = getClientInformation(request);
 
         GuacamoleSession session = authenticationService.getGuacamoleSession(authToken);
@@ -371,44 +350,16 @@ public class TunnelRequestService {
         try {
             StandardTokenMap tokenMap = new StandardTokenMap(authenticatedUser);
 
-
             tokenMap.put("PROCYON_USERNAME", procyonUser);
-            logger.info("CZARAS PROCYON_USERNAME="+procyonUser);
             tokenMap.put("PROCYON_CONNECTION", procyonConn);
-            logger.info("CZARAS PROCYON_CONNECTION="+procyonConn);
             tokenMap.put("PROCYON_DEVICE", procyonDevice);
-            logger.info("CZARAS PROCYON_DEVICE="+procyonDevice);
-            tokenMap.put("PROCYON_SESSION_ID", procyonSessionID);
-            logger.info("CZARAS PROCYON_SESSION_ID="+procyonSessionID);
-            tokenMap.put("PROCYON_INSTANCE_ID", procyonInstanceID);
-            logger.info("CZARAS PROCYON_INSTANCE_ID="+procyonInstanceID);
-            String historyPath = HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath();
-            tokenMap.put("HISTORY_PATH", historyPath);
-            logger.info("CZARAS HISTORY_PATH="+historyPath);
+            tokenMap.put("HISTORY_PATH", HistoryAuthenticationProvider.getRecordingSearchPath().getAbsolutePath());
 
             // Create connected tunnel using provided connection ID and client information
             GuacamoleTunnel tunnel = createConnectedTunnel(userContext, type,
                     id, info, tokenMap);
-            historyPath = "/var/lib/procyon/recordings";
-            String recordingPath = String.format("%s/%s/%s/%s/%s/%s_%s_%s", historyPath, procyonUser, procyonInstanceID,
-                    procyonConn, procyonSessionID, procyonDevice, tokenMap.get(StandardTokenMap.DATE_TOKEN),
-                    tokenMap.get(StandardTokenMap.TIME_TOKEN));
-            logger.info("CZARAS recording path = "+recordingPath);
-            tunnel.setRecordingPath(recordingPath);
-            // Specify the file path
-            File file = new File(recordingPath+".lock");
-
-            try {
-                // Attempt to create the file
-                if (file.createNewFile()) {
-                    System.out.println("Empty file created successfully.");
-                } else {
-                    System.out.println("File already exists.");
-                }
-            } catch (IOException e) {
-                // Handle potential I/O errors
-                e.printStackTrace();
-            }
+            tunnel.setProcyonUsername(procyonUser);
+            tunnel.setProcyonConnection(procyonConn);
 
             // Notify listeners to allow connection to be vetoed
             fireTunnelConnectEvent(authenticatedUser, authenticatedUser.getCredentials(), tunnel);

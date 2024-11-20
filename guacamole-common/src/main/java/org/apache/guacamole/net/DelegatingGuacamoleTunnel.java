@@ -34,7 +34,7 @@ public class DelegatingGuacamoleTunnel implements GuacamoleTunnel {
      * The wrapped GuacamoleTunnel.
      */
     private final GuacamoleTunnel tunnel;
-    private String procyonRecording = "";
+    private String procyonUsername = "";
     private String procyonConnection = "";
     private String procyonDevice = "";
 
@@ -49,14 +49,30 @@ public class DelegatingGuacamoleTunnel implements GuacamoleTunnel {
         this.tunnel = tunnel;
     }
 
-    public String getRecordingPath() {
-        return procyonRecording;
+    public String getProcyonUsername() {
+        return procyonUsername;
     }
 
-    public void setRecordingPath(String username) {
-        procyonRecording = username;
+    public String getProcyonConnection() {
+        return procyonConnection;
     }
-    
+
+    public String getProcyonDevice() {
+        return procyonDevice;
+    }
+
+    public void setProcyonUsername(String username) {
+        procyonUsername = username;
+    }
+
+    public void setProcyonConnection(String connection) {
+        procyonConnection = connection;
+    }
+
+    public void setProcyonDevice(String device) {
+        procyonDevice = device;
+    }
+
     @Override
     public GuacamoleReader acquireReader() {
         return tunnel.acquireReader();
